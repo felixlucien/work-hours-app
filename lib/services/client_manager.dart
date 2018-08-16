@@ -33,8 +33,8 @@ class ClientManagerService {
     return await timingStream.startTiming();
   }
 
-  stopTiming() {
-    timingStream.stopTiming();
+  stopTiming() async {
+    await timingStream.stopTiming();
   }
 
   resetTiming() {
@@ -51,8 +51,7 @@ class ClientManagerService {
   }
 
   saveTiming(var clientName) {
-    var time = DateTime
-        .parse(timingData["endTime"])
+    var time = DateTime.parse(timingData["endTime"])
         .difference(DateTime.parse(timingData["startTime"]))
         .inSeconds;
 

@@ -52,7 +52,8 @@ class StopWatchFragmentState extends State<StopWatchFragment> {
                 SizedBox(height: 20.0),
                 Text(startTime == null
                     ? ""
-                    : "Started at: ${TimeUtils.dateTimeToLocalTime(startTime)}"),
+                    : "Started at: ${TimeUtils.dateTimeToLocalTime(
+                        startTime)}"),
                 SizedBox(height: 20.0),
                 new FloatingActionButton(
                     backgroundColor: isRunning ? Colors.red : Colors.green,
@@ -75,18 +76,24 @@ class StopWatchFragmentState extends State<StopWatchFragment> {
                                   actions: [
                                     new FlatButton(
                                         child: new Text("Ok"),
-                                        onPressed: () {
+                                        onPressed: () async {
                                           stopWatchKey.currentState.stop();
                                           isRunning = false;
-                                          clientManagerService.stopTiming();
+                                          await clientManagerService.stopTiming();
 
                                           Navigator.pop(context);
 
                                           if (targetClient != null) {
+                                            print("TARGET CLIENT NOT NULL");
                                             stopWatchKey.currentState.reset();
                                             clientManagerService
                                                 .saveTiming(targetClient);
                                             clientManagerService.resetTiming();
+
+                                            isRunning = false;
+                                            startTime = null;
+
+                                            setState(() {});
                                           } else {
                                             showDialog(
                                               barrierDismissible: false,
@@ -217,8 +224,9 @@ class StopWatchState extends State<StopWatchWidget> {
     List<CircularStackEntry> data = [];
     var mins = elapsed.inMinutes - (60 * elapsed.inHours).floor();
     var seconds = elapsed.inSeconds - (60 * elapsed.inMinutes).floor();
-    elapsedTime =
-        "${elapsed.inHours}:${mins < 10 ? "0$mins" : "$mins"}:${seconds < 10 ? "0$seconds" : "$seconds"}";
+    elapsedTime = "${elapsed.inHours}:${mins < 10
+        ? "0$mins"
+        : "$mins"}:${seconds < 10 ? "0$seconds" : "$seconds"}";
 
     data.add(new CircularStackEntry(<CircularSegmentEntry>[
       new CircularSegmentEntry(elapsed.inHours / 12 * 100.0, Colors.red),
