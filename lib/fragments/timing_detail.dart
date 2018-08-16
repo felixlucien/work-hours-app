@@ -27,17 +27,11 @@ class TimingDetailState extends State<TimingDetail> {
         var start = DateTime.parse(work["startTime"]);
         var end = DateTime.parse(work["endTime"]);
 
-        var time = work["time"].toDouble();
-
-        var totalDuration = end.difference(start).inSeconds;
-
-        var breakSeconds = totalDuration - time;
-
         return new ListTile(
             leading: new Text(
                 "${TimeUtils.dateTimeToLocalTime(start)} - ${TimeUtils.dateTimeToLocalTime(end)}"),
             title: new Text(
-                "Work: ${TimeUtils.secondsToPreferredTime(time)} Breaks: ${TimeUtils.secondsToPreferredTime(breakSeconds)}"));
+                "Work: ${TimeUtils.secondsToPreferredTime(end.difference(start).inSeconds.toDouble())}"));
       }).toList()),
     );
   }

@@ -4,31 +4,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_circular_chart/flutter_circular_chart.dart';
 import 'package:work_hours/fragments/state_manager.dart';
 import 'package:work_hours/services/client_manager.dart';
+import 'package:work_hours/services/utils.dart';
 
 class StopWatchFragment extends StatefulWidget {
+  String targetClient;
+
+  StopWatchFragment({this.targetClient});
+
   @override
-  State<StatefulWidget> createState() => StopWatchFragmentState();
+  State<StatefulWidget> createState() => StopWatchFragmentState(targetClient);
 }
 
 class StopWatchFragmentState extends State<StopWatchFragment> {
-  bool isPausing = false, isRunning = false;
+  bool isRunning = false;
   ClientManagerService clientManagerService;
   GlobalKey<StopWatchState> stopWatchKey = new GlobalKey();
+  String targetClient;
+  DateTime startTime;
+
+  StopWatchFragmentState(this.targetClient);
 
   @override
   Widget build(BuildContext context) {
     clientManagerService = StateManager.of(context).clientManagerService;
 
     isRunning = clientManagerService.timingData["currentlyTiming"];
-    isPausing = clientManagerService.timingData["currentlyPausing"];
+
+    if (isRunning) {
+      startTime = DateTime.parse(clientManagerService.timingData["startTime"]);
+    }
 
     return new Scaffold(
         appBar: new AppBar(
           title: new Text('Timer'),
         ),
         body: new Container(
+            width: double.infinity,
             padding: EdgeInsets.all(20.0),
             child: new Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 StopWatchWidget(stopWatchKey,
                     isTiming: isRunning,
@@ -36,90 +50,90 @@ class StopWatchFragmentState extends State<StopWatchFragment> {
                     pauseBuffer:
                         clientManagerService.timingData["pauseBuffer"]),
                 SizedBox(height: 20.0),
-                new Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    new FloatingActionButton(
-                        backgroundColor: Colors.green,
-                        onPressed: () async {
-                          if (!isRunning) {
-                            var timingData =
-                                await clientManagerService.startTiming();
-
-                            stopWatchKey.currentState.start(
-                                DateTime.parse(timingData["startTime"]),
-                                timingData["pauseBuffer"]);
-                            isRunning = true;
-                          } else {
-                            if (!isPausing) {
-                              clientManagerService.startPause();
-                              stopWatchKey.currentState.stop();
-                              isPausing = true;
-                            } else {
-                              var timing =
-                                  await clientManagerService.stopPause();
-                              stopWatchKey.currentState.start(
-                                  DateTime.parse(timing["startTime"]),
-                                  timing["pauseBuffer"]);
-                              isPausing = false;
-                            }
-                          }
-                        },
-                        child: new Icon(isPausing && isRunning || !isRunning
-                            ? Icons.play_arrow
-                            : Icons.pause)),
-                  ],
-                ),
+                Text(startTime == null
+                    ? ""
+                    : "Started at: ${TimeUtils.dateTimeToLocalTime(startTime)}"),
                 SizedBox(height: 20.0),
-                new RaisedButton(
-                    onPressed: () {
-                      if (isRunning) {
-                        setState(() {
-                          stopWatchKey.currentState.stop();
-                        });
+                new FloatingActionButton(
+                    backgroundColor: isRunning ? Colors.red : Colors.green,
+                    onPressed: () async {
+                      if (!isRunning) {
+                        var timingData =
+                            await clientManagerService.startTiming();
 
-                        if (isPausing) {
-                          isPausing = false;
-                          clientManagerService.stopPause();
-                        }
-
-                        isRunning = false;
-                        clientManagerService.stopTiming();
-
+                        stopWatchKey.currentState.start(
+                            DateTime.parse(timingData["startTime"]),
+                            timingData["pauseBuffer"]);
+                        isRunning = true;
+                      } else {
                         showDialog(
                           context: context,
                           builder: (context) => new AlertDialog(
-                                title: new Text("Save"),
-                                content: new Column(children: [
-                                  new Text(
-                                      "Please choose a client to save work to."),
-                                  new Container(
-                                      height: 128.0,
-                                      child: new SingleChildScrollView(
-                                          child: new Column(
-                                              children: clientManagerService
-                                                  .clients.map((client) {
-                                        return new InkWell(
-                                            child: ListTile(
-                                                title:
-                                                    new Text(client["name"])),
-                                            onTap: () {
-                                              stopWatchKey.currentState.reset();
-                                              clientManagerService
-                                                  .saveTiming(client["name"]);
-                                              clientManagerService
-                                                  .resetTiming();
-                                              Navigator.pop(context);
-                                            });
-                                      }).toList()))),
-                                ]),
-                              ),
+                                  title: new Text("Confirm action."),
+                                  content: new Text(
+                                      "Are you sure you want to stop timing?"),
+                                  actions: [
+                                    new FlatButton(
+                                        child: new Text("Ok"),
+                                        onPressed: () {
+                                          stopWatchKey.currentState.stop();
+                                          isRunning = false;
+                                          clientManagerService.stopTiming();
+
+                                          Navigator.pop(context);
+
+                                          if (targetClient != null) {
+                                            stopWatchKey.currentState.reset();
+                                            clientManagerService
+                                                .saveTiming(targetClient);
+                                            clientManagerService.resetTiming();
+                                          } else {
+                                            showDialog(
+                                              barrierDismissible: false,
+                                              context: context,
+                                              builder:
+                                                  (context) => new AlertDialog(
+                                                        title: new Text("Save"),
+                                                        content: new Column(
+                                                            children: [
+                                                              new Text(
+                                                                  "Please choose a client to save work to."),
+                                                              new Container(
+                                                                  child: new SingleChildScrollView(
+                                                                      child: new Column(
+                                                                          mainAxisSize: MainAxisSize.max,
+                                                                          children: clientManagerService.clients.map((client) {
+                                                                            return new InkWell(
+                                                                                child: ListTile(title: new Text(client["name"])),
+                                                                                onTap: () {
+                                                                                  stopWatchKey.currentState.reset();
+                                                                                  clientManagerService.saveTiming(client["name"]);
+                                                                                  clientManagerService.resetTiming();
+                                                                                  isRunning = false;
+                                                                                  startTime = null;
+
+                                                                                  Navigator.pop(context);
+                                                                                  setState(() {});
+                                                                                });
+                                                                          }).toList()))),
+                                                            ]),
+                                                      ),
+                                            );
+                                          }
+                                        }),
+                                    new FlatButton(
+                                        child: new Text("Cancel"),
+                                        onPressed: () => Navigator.pop(context))
+                                  ]),
                         );
+                        setState(() {});
                       }
-                      setState(() {});
                     },
-                    child: new Text("Stop and save session")),
-                SizedBox(height: 20.0)
+                    child: new Icon(isRunning ? Icons.stop : Icons.play_arrow)),
+                new SizedBox(height: 20.0),
+                new Text(targetClient == null
+                    ? ""
+                    : "Currently set to save to client ${targetClient}")
               ],
             )));
   }
@@ -171,11 +185,12 @@ class StopWatchState extends State<StopWatchWidget> {
 
     isRunning = true;
     timer = new Timer.periodic(Duration(seconds: 1), (timer) {
-      _chartKey.currentState.updateData(generateChartData(Duration(
-          seconds: DateTime.now().difference(start).inSeconds -
-              totalPauseTimeSeconds)));
       if (mounted) {
-        setState(() {});
+        setState(() {
+          _chartKey.currentState.updateData(generateChartData(Duration(
+              seconds: DateTime.now().difference(start).inSeconds -
+                  totalPauseTimeSeconds)));
+        });
       }
     });
   }

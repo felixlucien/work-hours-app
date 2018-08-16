@@ -16,7 +16,7 @@ class ClientManagerService {
   ClientManagerService(this.prefs, Function onUpdate) {
     clientStream = new ClientStream(prefs);
     clientStream.listen((data) {
-      clients = data;
+      this.clients = data;
       onUpdate();
       print(clients);
     });

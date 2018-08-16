@@ -27,8 +27,6 @@ class ClientDetailState extends State<ClientDetail> {
 
   var totalTime = 0;
 
-  //Widget presetData(scope, hours) {}
-
   @override
   Widget build(BuildContext context) {
     var totalHours = 0.0;
@@ -39,12 +37,12 @@ class ClientDetailState extends State<ClientDetail> {
 
     return new Scaffold(
         floatingActionButton: new FloatingActionButton(
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  new MaterialPageRoute(
-                      builder: (context) => new StopWatchFragment()));
-            },
+            onPressed: () => Navigator.push(
+                context,
+                new MaterialPageRoute(
+                    builder: (context) => new StopWatchFragment(
+                          targetClient: client["name"],
+                        ))),
             child: new Icon(Icons.access_alarm)),
         appBar: new AppBar(title: new Text(client["name"])),
         body: new Column(children: [

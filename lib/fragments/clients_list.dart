@@ -19,50 +19,50 @@ class ClientListState extends State<ClientList> {
       appBar: new AppBar(
         title: new Text("Clients"),
       ),
-      body: new StreamBuilder(
-          stream: clientManagerService.clientStream,
-          builder: (context, snap) {
-            if (snap.hasData) {
-              return new ListView(
-                  children: (snap.data as List).map((client) {
-                return new InkWell(
-                  child: new ListTile(title: new Text(client["name"])),
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        new MaterialPageRoute(
-                            builder: (context) => new ClientDetail(client)));
-                  },
-                  onLongPress: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => new AlertDialog(
-                              title: new Text("Confirm delete?"),
-                              content: new Text(
-                                  "Are you sure you want to delete ${client["name"]}? This cannot be undone."),
-                              actions: [
-                                new FlatButton(
-                                  child: new Text("Ok"),
-                                  onPressed: () {
-                                    clientManagerService.deleteClient(client);
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                                new FlatButton(
-                                  child: new Text("Cancel"),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                              ]),
+      body: mounted != null
+          ? new StreamBuilder(
+              stream: clientManagerService.clientStream,
+              builder: (_, snap) {
+                if (snap.hasData) {
+                  return new ListView(
+                      children: (snap.data as List).map((client) {
+                    return new InkWell(
+                      child: new ListTile(title: new Text(client["name"])),
+                      onTap: () => Navigator.of(context).push(
+                          new MaterialPageRoute(
+                              builder: (_) => new ClientDetail(client))),
+                      onLongPress: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => new AlertDialog(
+                                  title: new Text("Confirm delete?"),
+                                  content: new Text(
+                                      "Are you sure you want to delete ${client["name"]}? This cannot be undone."),
+                                  actions: [
+                                    new FlatButton(
+                                      child: new Text("Ok"),
+                                      onPressed: () {
+                                        clientManagerService
+                                            .deleteClient(client);
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                    new FlatButton(
+                                      child: new Text("Cancel"),
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                  ]),
+                        );
+                      },
                     );
-                  },
-                );
-              }).toList());
-            } else {
-              return new Center(child: new Text("Loading..."));
-            }
-          }),
+                  }).toList());
+                } else {
+                  return new Center(child: new Text("Loading..."));
+                }
+              })
+          : new Container(),
       floatingActionButton: new FloatingActionButton(
           child: new Icon(Icons.create),
           onPressed: () {
