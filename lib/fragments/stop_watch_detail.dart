@@ -40,7 +40,7 @@ class StopWatchFragmentState extends State<StopWatchFragment> {
         ),
         body: new Container(
             width: double.infinity,
-            padding: EdgeInsets.all(20.0),
+            padding: EdgeInsets.all(12.0),
             child: new Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
@@ -79,9 +79,15 @@ class StopWatchFragmentState extends State<StopWatchFragment> {
                                         onPressed: () async {
                                           stopWatchKey.currentState.stop();
                                           isRunning = false;
-                                          await clientManagerService.stopTiming();
+                                          await clientManagerService
+                                              .stopTiming();
 
                                           Navigator.pop(context);
+
+                                          if (clientManagerService
+                                              .clients.isEmpty) {
+                                            return;
+                                          }
 
                                           if (targetClient != null) {
                                             print("TARGET CLIENT NOT NULL");
@@ -101,29 +107,42 @@ class StopWatchFragmentState extends State<StopWatchFragment> {
                                               builder:
                                                   (context) => new AlertDialog(
                                                         title: new Text("Save"),
-                                                        content: new Column(
-                                                            children: [
+                                                        content:
+                                                            new SingleChildScrollView(
+                                                                child: new Column(
+                                                                    children: [
                                                               new Text(
                                                                   "Please choose a client to save work to."),
-                                                              new Container(
-                                                                  child: new SingleChildScrollView(
-                                                                      child: new Column(
-                                                                          mainAxisSize: MainAxisSize.max,
-                                                                          children: clientManagerService.clients.map((client) {
-                                                                            return new InkWell(
-                                                                                child: ListTile(title: new Text(client["name"])),
-                                                                                onTap: () {
-                                                                                  stopWatchKey.currentState.reset();
-                                                                                  clientManagerService.saveTiming(client["name"]);
-                                                                                  clientManagerService.resetTiming();
-                                                                                  isRunning = false;
-                                                                                  startTime = null;
+                                                              new Column(
+                                                                  children: clientManagerService
+                                                                      .clients
+                                                                      .map(
+                                                                          (client) {
+                                                                return new InkWell(
+                                                                    child: ListTile(
+                                                                        title: new Text(
+                                                                            client["name"])),
+                                                                    onTap: () {
+                                                                      stopWatchKey
+                                                                          .currentState
+                                                                          .reset();
+                                                                      clientManagerService
+                                                                          .saveTiming(
+                                                                              client["name"]);
+                                                                      clientManagerService
+                                                                          .resetTiming();
+                                                                      isRunning =
+                                                                          false;
+                                                                      startTime =
+                                                                          null;
 
-                                                                                  Navigator.pop(context);
-                                                                                  setState(() {});
-                                                                                });
-                                                                          }).toList()))),
-                                                            ]),
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                      setState(
+                                                                          () {});
+                                                                    });
+                                                              }).toList()),
+                                                            ])),
                                                       ),
                                             );
                                           }
